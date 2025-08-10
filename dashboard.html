@@ -58,75 +58,44 @@
 
 <body>
   <header class="bg-primary text-white p-3">
-  <div class="container">
-    <!-- Título y dropdown de usuario -->
-    <div class="d-flex justify-content-between align-items-center">
-      <h1 class="h3 mb-0">📚 Gestión de Tareas Académicas</h1>
-      <div class="d-flex align-items-center">
-        <button id="notifBtn" class="btn btn-light btn-sm me-3 position-relative">
-          <i class="bi bi-bell"></i>
-          <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge bg-danger" style="display:none">0</span>
-        </button>
+    <div class="container">
+      <!-- Título y dropdown de usuario -->
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">📚 Gestión de Tareas Académicas</h1>
+        <div class="d-flex align-items-center">
+          <button id="notifBtn" class="btn btn-light btn-sm me-3 position-relative">
+            <i class="bi bi-bell"></i>
+            <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge bg-danger" style="display:none">0</span>
+          </button>
 
-        <div class="dropdown text-end">
-          <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">
-            <div class="user-avatar me-2" id="userAvatar">U</div>
-            <span id="userName">Usuario</span>
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> Mi Perfil</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
-          </ul>
+          <div class="dropdown text-end">
+            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">
+              <div class="user-avatar me-2" id="userAvatar">U</div>
+              <span id="userName">Usuario</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item text-danger" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
+            </ul>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Botón de modo oscuro, alineado a la derecha dentro del container -->
-    <div class="d-flex justify-content-start mt-2">
-      <button id="toggleTheme" class="btn btn-light btn-sm">Modo Oscuro</button>
+      <!-- Botón de modo oscuro -->
+      <div class="d-flex justify-content-end mt-2">
+        <button id="toggleTheme" class="btn btn-light btn-sm">Modo Oscuro</button>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
 
   <main class="container my-4">
     <h2>📌 Mis Tareas</h2>
-    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addTaskModal">➕ Nueva Tarea</button>
+    <!-- Botón que redirige a add-task.html -->
+    <a href="add-task.html" class="btn btn-success mb-3">➕ Nueva Tarea</a>
 
     <ul class="list-group" id="taskList">
       <li class="list-group-item text-center text-muted">Cargando tareas...</li>
     </ul>
   </main>
-
-  <!-- Modal: Agregar Tarea -->
-  <div class="modal fade" id="addTaskModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <form id="taskForm" class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Agregar Nueva Tarea</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Materia</label>
-            <input id="subject" class="form-control" required />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Descripción</label>
-            <textarea id="description" class="form-control" rows="3"></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Fecha de entrega</label>
-            <input id="dueDate" type="date" class="form-control" required />
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-success">Guardar</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- Modal: Notificaciones -->
   <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true">
@@ -156,19 +125,14 @@
       const notifBtn = document.getElementById('notifBtn');
       const notifBadge = document.getElementById('notifBadge');
       const notificationsList = document.getElementById('notificationsList');
-      const addTaskModalEl = document.getElementById('addTaskModal');
-      const addTaskModal = new bootstrap.Modal(addTaskModalEl);
       const notifModal = new bootstrap.Modal(document.getElementById('notificationsModal'));
-      const taskForm = document.getElementById('taskForm');
-      const subjectInput = document.getElementById('subject');
-      const descriptionInput = document.getElementById('description');
-      const dueDateInput = document.getElementById('dueDate');
       const logoutBtn = document.getElementById('logoutBtn');
       const toggleThemeBtn = document.getElementById('toggleTheme');
 
       // Estado
       let tasks = [];
       let currentUser = null;
+      let notifications = [];
 
       // Utilidades
       function safeParse(key) {
@@ -179,6 +143,7 @@
         }
       }
 
+      // Cargar usuario
       function loadUser() {
         const user = safeParse('currentUser');
         if (!user) {
@@ -191,19 +156,19 @@
         return user;
       }
 
-      // Obtener clave única de tareas por usuario
+      // Clave única por usuario
       function getUserTasksKey() {
         return `tasks_${currentUser.email}`;
       }
 
-      // Cargar tareas del usuario actual
+      // Cargar tareas
       function loadTasks() {
         const key = getUserTasksKey();
         const data = safeParse(key);
         tasks = Array.isArray(data) ? data : [];
       }
 
-      // Guardar tareas del usuario actual
+      // Guardar tareas
       function saveTasks() {
         const key = getUserTasksKey();
         localStorage.setItem(key, JSON.stringify(tasks));
@@ -228,7 +193,7 @@
         return Math.ceil((due - today) / (1000 * 60 * 60 * 24));
       }
 
-      // Notificaciones
+      // Generar notificaciones
       function generateNotifications() {
         const notifs = [];
         tasks.forEach(t => {
@@ -240,9 +205,11 @@
             notifs.push(`⚠️ ${t.subject}: vence en ${left} día${left !== 1 ? 's' : ''}`);
           }
         });
+        notifications = notifs;
+
+        // Mostrar u ocultar badge
         notifBadge.style.display = notifs.length ? 'inline' : 'none';
         notifBadge.textContent = notifs.length;
-        notifications = notifs;
       }
 
       // Renderizar tareas
@@ -293,7 +260,7 @@
           .replace(/'/g, '&#39;');
       }
 
-      // Eventos en lista de tareas
+      // Eventos en la lista de tareas
       taskList.addEventListener('click', (e) => {
         const li = e.target.closest('li');
         if (!li) return;
@@ -325,40 +292,15 @@
         }
       });
 
-      // Formulario: agregar tarea
-      taskForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const subject = subjectInput.value.trim();
-        const description = descriptionInput.value.trim();
-        const dueDate = dueDateInput.value;
-
-        if (!subject || !dueDate) {
-          alert('La materia y la fecha son obligatorias.');
-          return;
-        }
-
-        const newTask = {
-          id: Date.now(),
-          subject,
-          description,
-          dueDate,
-          completed: false
-        };
-
-        tasks.push(newTask);
-        saveTasks();
-        renderTasks();
-        generateNotifications();
-
-        taskForm.reset();
-        addTaskModal.hide();
-      });
-
-      // Notificaciones
+      // Notificaciones: ocultar badge al verlas
       notifBtn.addEventListener('click', () => {
         notificationsList.innerHTML = notifications.length
           ? notifications.map(n => `<p class="mb-1">${escapeHtml(n)}</p>`).join('')
           : '<p class="text-muted">No hay notificaciones.</p>';
+
+        // ✅ Ocultar el badge al abrir
+        notifBadge.style.display = 'none';
+
         notifModal.show();
       });
 
@@ -387,11 +329,11 @@
         currentUser = loadUser();
         if (!currentUser) return;
 
-        // Cargar tema
+        // Aplicar tema
         const savedTheme = localStorage.getItem('theme') || 'light';
         applyTheme(savedTheme);
 
-        // Cargar tareas del usuario
+        // Cargar tareas
         loadTasks();
         renderTasks();
         generateNotifications();
@@ -402,10 +344,11 @@
         }
       }
 
-      // Ejecutar inicialización
+      // Ejecutar
       init();
     });
   </script>
 </body>
 </html>
+
 
