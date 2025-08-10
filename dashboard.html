@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dashboard - Gestión de Tareas Académicas</title>
 
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
   <style>
     .user-avatar {
       width: 36px;
@@ -20,8 +23,37 @@
       font-weight: 700;
     }
     .bg-success-subtle { background-color: #d1fae5 !important; }
+
+    /* Estilos para modo oscuro personalizados */
+    html[data-bs-theme="dark"] {
+      background-color: #121212;
+      color: #e0e0e0;
+    }
+    html[data-bs-theme="dark"] .card, 
+    html[data-bs-theme="dark"] .list-group-item {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      border-color: #333;
+    }
+    html[data-bs-theme="dark"] .form-control {
+      background-color: #333;
+      color: #fff;
+      border-color: #555;
+    }
+    html[data-bs-theme="dark"] .modal-content {
+      background-color: #1e1e1e;
+      color: #fff;
+    }
+    html[data-bs-theme="dark"] .btn-close {
+      filter: invert(1);
+    }
+    #toggleTheme {
+      margin-top: 10px;
+      margin-right: 30px;
+      margin-bottom: 10px;
+      float: right;
+    }
   </style>
-  
 </head>
 
 <body>
@@ -48,28 +80,26 @@
           </div>
         </div>
       </div>
-
       <button id="toggleTheme" class="btn btn-light btn-sm mt-2">Modo Oscuro</button>
     </div>
   </header>
 
   <main class="container my-4">
     <h2>📌 Mis Tareas</h2>
-    <a href="add-task.html" class="btn btn-success mb-3">➕ Nueva Tarea</a>
-
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addTaskModal">➕ Nueva Tarea</button>
 
     <ul class="list-group" id="taskList">
       <li class="list-group-item text-center text-muted">Cargando tareas...</li>
     </ul>
   </main>
 
-  <!-- Modal agregar tarea -->
+  <!-- Modal: Agregar Tarea -->
   <div class="modal fade" id="addTaskModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
       <form id="taskForm" class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Agregar Nueva Tarea</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
@@ -78,7 +108,7 @@
           </div>
           <div class="mb-3">
             <label class="form-label">Descripción</label>
-            <textarea id="description" class="form-control"></textarea>
+            <textarea id="description" class="form-control" rows="3"></textarea>
           </div>
           <div class="mb-3">
             <label class="form-label">Fecha de entrega</label>
@@ -86,40 +116,294 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-success" type="submit">Guardar</button>
-          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success">Guardar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal notificaciones -->
+  <!-- Modal: Notificaciones -->
   <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">🔔 Notificaciones</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="notificationsList">
           <p class="text-muted">No hay notificaciones.</p>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- BOOTSTRAP JS (¡antes del script.js!) -->
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="script.js"></script>
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const theme = localStorage.getItem('theme') || 'light'; // "light" por defecto si no hay guardado
-    document.documentElement.setAttribute('data-bs-theme', theme);
-  });
 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Elementos
+      const taskList = document.getElementById('taskList');
+      const notifBtn = document.getElementById('notifBtn');
+      const notifBadge = document.getElementById('notifBadge');
+      const notificationsList = document.getElementById('notificationsList');
+      const addTaskModalEl = document.getElementById('addTaskModal');
+      const addTaskModal = new bootstrap.Modal(addTaskModalEl);
+      const notifModal = new bootstrap.Modal(document.getElementById('notificationsModal'));
+      const taskForm = document.getElementById('taskForm');
+      const subjectInput = document.getElementById('subject');
+      const descriptionInput = document.getElementById('description');
+      const dueDateInput = document.getElementById('dueDate');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const toggleThemeBtn = document.getElementById('toggleTheme');
+
+      // Estado
+      let tasks = [];
+      let currentUser = null;
+
+      // Utilidades
+      function safeParse(key) {
+        try {
+          return JSON.parse(localStorage.getItem(key));
+        } catch {
+          return null;
+        }
+      }
+
+      function loadUser() {
+        const user = safeParse('currentUser');
+        if (!user) {
+          window.location.href = 'index.html';
+          return null;
+        }
+        currentUser = user;
+        document.getElementById('userName').textContent = user.name.split(' ')[0];
+        document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
+        return user;
+      }
+
+      // Obtener clave única de tareas por usuario
+      function getUserTasksKey() {
+        return `tasks_${currentUser.email}`;
+      }
+
+      // Cargar tareas del usuario actual
+      function loadTasks() {
+        const key = getUserTasksKey();
+        const data = safeParse(key);
+        tasks = Array.isArray(data) ? data : [];
+      }
+
+      // Guardar tareas del usuario actual
+      function saveTasks() {
+        const key = getUserTasksKey();
+        localStorage.setItem(key, JSON.stringify(tasks));
+      }
+
+      // Formatear fecha
+      function formatDate(dateStr) {
+        if (!dateStr) return '';
+        return new Date(dateStr).toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: '2-digit'
+        });
+      }
+
+      // Días restantes
+      function daysUntil(dateStr) {
+        const today = new Date();
+        const due = new Date(dateStr);
+        today.setHours(0, 0, 0, 0);
+        due.setHours(0, 0, 0, 0);
+        return Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+      }
+
+      // Notificaciones
+      function generateNotifications() {
+        const notifs = [];
+        tasks.forEach(t => {
+          if (t.completed) return;
+          const left = daysUntil(t.dueDate);
+          if (left < 0) {
+            notifs.push(`❌ ${t.subject}: vencida (${formatDate(t.dueDate)})`);
+          } else if (left <= 3) {
+            notifs.push(`⚠️ ${t.subject}: vence en ${left} día${left !== 1 ? 's' : ''}`);
+          }
+        });
+        notifBadge.style.display = notifs.length ? 'inline' : 'none';
+        notifBadge.textContent = notifs.length;
+        notifications = notifs;
+      }
+
+      // Renderizar tareas
+      function renderTasks() {
+        taskList.innerHTML = '';
+        if (tasks.length === 0) {
+          taskList.innerHTML = '<li class="list-group-item text-center text-muted">No tienes tareas aún.</li>';
+          return;
+        }
+
+        tasks.forEach(task => {
+          const li = document.createElement('li');
+          li.className = `list-group-item d-flex flex-column ${task.completed ? 'bg-success-subtle' : ''}`;
+          li.dataset.id = task.id;
+
+          const left = daysUntil(task.dueDate);
+          const statusClass = left < 0 ? 'text-danger fw-bold' : left <= 3 ? 'text-warning fw-bold' : 'text-muted';
+          const leftText = left < 0 ? `${Math.abs(left)} día(s) vencida` : `${left} día${left !== 1 ? 's' : ''}`;
+
+          li.innerHTML = `
+            <div class="w-100">
+              <div class="d-flex justify-content-between align-items-start">
+                <h5 class="mb-1">${escapeHtml(task.subject)}</h5>
+                <span class="badge bg-info text-dark">${formatDate(task.dueDate)}</span>
+              </div>
+              <p class="mb-1 text-secondary">${escapeHtml(task.description || 'Sin descripción')}</p>
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <small class="text-muted">Quedan: <span class="${statusClass}">${leftText}</span></small>
+                <div>
+                  <button class="btn btn-sm btn-success complete-btn" title="Completar/Reactivar">${task.completed ? '🔄' : '✔️'}</button>
+                  <button class="btn btn-sm btn-warning edit-btn" title="Editar">✏️</button>
+                  <button class="btn btn-sm btn-danger delete-btn" title="Eliminar">🗑️</button>
+                </div>
+              </div>
+            </div>
+          `;
+          taskList.appendChild(li);
+        });
+      }
+
+      // Protección XSS
+      function escapeHtml(str = '') {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '<')
+          .replace(/>/g, '>')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      // Eventos en lista de tareas
+      taskList.addEventListener('click', (e) => {
+        const li = e.target.closest('li');
+        if (!li) return;
+        const id = Number(li.dataset.id);
+        const idx = tasks.findIndex(t => t.id === id);
+        if (idx === -1) return;
+
+        if (e.target.closest('.complete-btn')) {
+          tasks[idx].completed = !tasks[idx].completed;
+          saveTasks(); renderTasks(); generateNotifications();
+        } else if (e.target.closest('.delete-btn')) {
+          if (confirm(`¿Eliminar tarea "${tasks[idx].subject}"?`)) {
+            tasks.splice(idx, 1);
+            saveTasks(); renderTasks(); generateNotifications();
+          }
+        } else if (e.target.closest('.edit-btn')) {
+          const newSubject = prompt('Materia:', tasks[idx].subject);
+          if (!newSubject) return;
+          const newDesc = prompt('Descripción:', tasks[idx].description || '');
+          const newDue = prompt('Fecha (YYYY-MM-DD):', tasks[idx].dueDate);
+          if (!newDue || !/^\d{4}-\d{2}-\d{2}$/.test(newDue)) {
+            alert('Fecha inválida');
+            return;
+          }
+          tasks[idx].subject = newSubject.trim();
+          tasks[idx].description = newDesc.trim();
+          tasks[idx].dueDate = newDue;
+          saveTasks(); renderTasks(); generateNotifications();
+        }
+      });
+
+      // Formulario: agregar tarea
+      taskForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const subject = subjectInput.value.trim();
+        const description = descriptionInput.value.trim();
+        const dueDate = dueDateInput.value;
+
+        if (!subject || !dueDate) {
+          alert('La materia y la fecha son obligatorias.');
+          return;
+        }
+
+        const newTask = {
+          id: Date.now(),
+          subject,
+          description,
+          dueDate,
+          completed: false
+        };
+
+        tasks.push(newTask);
+        saveTasks();
+        renderTasks();
+        generateNotifications();
+
+        taskForm.reset();
+        addTaskModal.hide();
+      });
+
+      // Notificaciones
+      notifBtn.addEventListener('click', () => {
+        notificationsList.innerHTML = notifications.length
+          ? notifications.map(n => `<p class="mb-1">${escapeHtml(n)}</p>`).join('')
+          : '<p class="text-muted">No hay notificaciones.</p>';
+        notifModal.show();
+      });
+
+      // Modo oscuro
+      function applyTheme(theme) {
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        toggleThemeBtn.textContent = theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro';
+      }
+
+      toggleThemeBtn.addEventListener('click', () => {
+        const current = localStorage.getItem('theme') || 'light';
+        const next = current === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('theme', next);
+        applyTheme(next);
+      });
+
+      // Cerrar sesión
+      logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        localStorage.removeItem('currentUser');
+        window.location.href = 'index.html';
+      });
+
+      // Inicialización
+      function init() {
+        currentUser = loadUser();
+        if (!currentUser) return;
+
+        // Cargar tema
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        applyTheme(savedTheme);
+
+        // Cargar tareas del usuario
+        loadTasks();
+        renderTasks();
+        generateNotifications();
+
+        // Mostrar notificaciones al inicio si hay
+        if (notifications.length > 0) {
+          setTimeout(() => notifModal.show(), 500);
+        }
+      }
+
+      // Ejecutar inicialización
+      init();
+    });
+  </script>
+</body>
+</html>
 </script>
 </body>
 </html>
+
