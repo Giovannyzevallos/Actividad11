@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Tareas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    
+
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        html[data-bs-theme="dark"], 
+html[data-bs-theme="dark"] body {
+  background-color: #121212 !important; /* Fondo negro oscuro */
+  color: #ffffff !important; /* Texto blanco */
+}
+
+/* Asegura que los formularios y contenedores tengan fondo oscuro y texto blanco */
+html[data-bs-theme="dark"] .form-container {
+  background-color: #1e1e1e !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+/* Inputs y textarea con fondo oscuro y texto claro */
+html[data-bs-theme="dark"] input,
+html[data-bs-theme="dark"] textarea,
+html[data-bs-theme="dark"] select {
+  background-color: #333 !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+/* Botones secundarios que usas */
+html[data-bs-theme="dark"] .btn-outline-secondary {
+  color: #ddd;
+  border-color: #666;
+}
+html[data-bs-theme="dark"] .btn-outline-secondary:hover {
+  background-color: #444;
+  color: #fff;
+}
+
+/* Links */
+html[data-bs-theme="dark"] a {
+  color: #63a4ff; /* Azul claro para links */
+}
+#toggleTheme {
+    margin-top: 10px;
+    margin-right: 30px;
+    margin-bottom: 10px;
+    float: right;
+    
+
+  
+}
+
+    </style>
+   
+<button id="toggleTheme" class="btn btn-primary btn-sm">Modo Oscuro</button>
+
+
+</head>
+<body>
+    <div class="container d-flex vh-100 align-items-center justify-content-center">
+        <div class="card shadow p-4" style="width: 100%; max-width: 400px;">
+            <h1 class="text-center mb-4">🔐 Iniciar Sesión</h1>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="usuario" class="form-label">Usuario (Email)</label>
+                    <input
+                        type="email"
+                        class="form-control"
+                        id="usuario"
+                        required
+                        placeholder="Ingresa tu email"
+                    >
+                </div>
+                <div class="mb-3">
+                    <label for="contrasena" class="form-label">Contraseña</label>
+                    <input
+                        type="password"
+                        class="form-control"
+                        id="contrasena"
+                        required
+                        placeholder="Ingresa tu contraseña"
+                    >
+                </div>
+                <div id="errorLogin" class="text-danger mb-3" role="alert" aria-live="assertive"></div>
+                <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+            </form>
+            <p class="text-center mt-3">
+                <a href="registro.html">¿No tienes cuenta? Regístrate</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const usuario = document.getElementById("usuario").value.trim();
+            const contrasena = document.getElementById("contrasena").value.trim();
+            const errorDiv = document.getElementById("errorLogin");
+
+            // Obtener usuario registrado
+            const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+            const usuarioEncontrado = usuarios.find(u => u.email === usuario);
+
+            if (usuarioEncontrado && usuarioEncontrado.password === contrasena) {
+                // Guardar sesión del usuario actual
+                localStorage.setItem("currentUser", JSON.stringify({
+                    name: usuarioEncontrado.name,
+                    email: usuarioEncontrado.email
+                }));
+                window.location.href = "dashboard.html";
+            } else {
+                errorDiv.textContent = "Usuario o contraseña incorrectos.";
+            }
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.getElementById('darkModeToggle');
+  const theme = localStorage.getItem('theme') || 'light';
+
+  // Aplicar tema cargado
+  document.documentElement.setAttribute('data-bs-theme', theme);
+
+  // Sincronizar estado del toggle
+  if (toggle) toggle.checked = (theme === 'dark');
+
+  // Escuchar cambios para actualizar tema y guardar preferencia
+  if (toggle) {
+    toggle.addEventListener('change', () => {
+      const newTheme = toggle.checked ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-bs-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+  }
+});
+document.addEventListener('DOMContentLoaded', () => {
+  const toggleBtn = document.getElementById('toggleTheme');
+
+  // Obtener tema guardado o establecer 'light' por defecto
+  let currentTheme = localStorage.getItem('theme') || 'light';
+
+  // Aplicar tema guardado en la carga de página
+  document.documentElement.setAttribute('data-bs-theme', currentTheme);
+  updateButtonText(currentTheme);
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      // Cambiar tema según el actual
+      currentTheme = (currentTheme === 'light') ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-bs-theme', currentTheme);
+      localStorage.setItem('theme', currentTheme);
+      updateButtonText(currentTheme);
+    });
+      }
+
+
+      function updateButtonText(theme) {
+      if (!toggleBtn) return;
+        toggleBtn.textContent = theme === 'light' ? 'Modo Oscuro' : 'Modo Claro';
+    }
+    });
+
+
+
+    </script>
+</body>
+</html> 
