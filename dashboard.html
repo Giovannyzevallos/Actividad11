@@ -236,7 +236,7 @@
           const left = daysUntil(t.dueDate);
           if (left < 0) {
             notifs.push(`❌ ${t.subject}: vencida (${formatDate(t.dueDate)})`);
-          } else if (left <= 3) {
+          } else if (left <= 10) {
             notifs.push(`⚠️ ${t.subject}: vence en ${left} día${left !== 1 ? 's' : ''}`);
           }
         });
@@ -408,3 +408,4 @@
   </script>
 </body>
 </html>
+
