@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+
+    <style>
+        body {
+            background-color: #f4f6f9;
+        }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        html[data-bs-theme="dark"], 
+html[data-bs-theme="dark"] body {
+  background-color: #121212 !important; /* Fondo negro oscuro */
+  color: #ffffff !important; /* Texto blanco */
+}
+
+/* Asegura que los formularios y contenedores tengan fondo oscuro y texto blanco */
+html[data-bs-theme="dark"] .form-container {
+  background-color: #1e1e1e !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+/* Inputs y textarea con fondo oscuro y texto claro */
+html[data-bs-theme="dark"] input,
+html[data-bs-theme="dark"] textarea,
+html[data-bs-theme="dark"] select {
+  background-color: #333 !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+/* Botones secundarios que usas */
+html[data-bs-theme="dark"] .btn-outline-secondary {
+  color: #ddd;
+  border-color: #666;
+}
+html[data-bs-theme="dark"] .btn-outline-secondary:hover {
+  background-color: #444;
+  color: #fff;
+}
+
+/* Links */
+html[data-bs-theme="dark"] a {
+  color: #63a4ff; /* Azul claro para links */
+}
+#toggleTheme {
+    margin-top: 10px;
+  margin-right: 30px;
+  margin-bottom: 10px;
+  float: right;
+  
+}
+
+    </style>
+    
+  <button id="toggleTheme" class="btn btn-primary btn-sm">Modo Oscuro</button>
+
+
+
+</head>
+<body>
+      
+    <div class="container d-flex vh-50 align-items-center justify-content-center">
+        <div class="card shadow p-4" style="width: 100%; max-width: 400px;">
+            <h1 class="text-center mb-4">📝 Registro</h1>
+            <form id="registroForm">
+                <div class="mb-3">
+                    <label for="nombres" class="form-label">Nombres</label>
+                    <input type="text" class="form-control" id="nombres" required placeholder="Tus nombres">
+                </div>
+                <div class="mb-3">
+                    <label for="apellidos" class="form-label">Apellidos</label>
+                    <input type="text" class="form-control" id="apellidos" required placeholder="Tus apellidos">
+                </div>
+                <div class="mb-3">
+                    <label for="nuevoUsuario" class="form-label">Usuario (Email)</label>
+                    <input type="email" class="form-control" id="nuevoUsuario" required placeholder="ejemplo@email.com">
+                </div>
+                <div class="mb-3">
+                    <label for="nuevaContrasena" class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="nuevaContrasena" required placeholder="Ingresa tu contraseña">
+                </div>
+                <div class="mb-3">
+                    <label for="confirmarContrasena" class="form-label">Confirmar Contraseña</label>
+                    <input type="password" class="form-control" id="confirmarContrasena" required placeholder="Repite tu contraseña">
+                </div>
+                <div id="errorRegistro" class="text-danger mb-3"></div>
+                <button type="submit" class="btn btn-primary w-100">Registrarme</button>
+            </form>
+            <p class="text-center mt-3">
+                <a href="index.html">Ya tengo cuenta</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("registroForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const nombres = document.getElementById("nombres").value.trim();
+            const apellidos = document.getElementById("apellidos").value.trim();
+            const email = document.getElementById("nuevoUsuario").value.trim();
+            const password = document.getElementById("nuevaContrasena").value.trim();
+            const confirmar = document.getElementById("confirmarContrasena").value.trim();
+            const errorDiv = document.getElementById("errorRegistro");
+            
+
+            if (!nombres || !apellidos || !email || !password || !confirmar) {
+                errorDiv.textContent = "Por favor, completa todos los campos.";
+                return;
+            }
+
+            if (password !== confirmar) {
+                errorDiv.textContent = "Las contraseñas no coinciden.";
+                return;
+            }
+
+            const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+
+            if (usuarios.some(u => u.email === email)) {
+                errorDiv.textContent = "Este correo ya está registrado.";
+                return;
+            }
+
+            // Guardar nuevo usuario
+            usuarios.push({
+                name: `${nombres} ${apellidos}`,
+                email,
+                password
+            });
+
+            localStorage.setItem("usuarios", JSON.stringify(usuarios));
+            alert("✅ Registro exitoso. Ahora puedes iniciar sesión.");
+            window.location.href = "index.html";
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.getElementById('darkModeToggle');
+  const theme = localStorage.getItem('theme') || 'light';
+
+  // Aplicar tema cargado
+  document.documentElement.setAttribute('data-bs-theme', theme);
+
+  // Sincronizar estado del toggle
+  if (toggle) toggle.checked = (theme === 'dark');
+
+  // Escuchar cambios para actualizar tema y guardar preferencia
+  if (toggle) {
+    toggle.addEventListener('change', () => {
+      const newTheme = toggle.checked ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-bs-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+  }
+});
+document.addEventListener('DOMContentLoaded', () => {
+  const toggleBtn = document.getElementById('toggleTheme');
+
+  // Obtener tema guardado o establecer 'light' por defecto
+  let currentTheme = localStorage.getItem('theme') || 'light';
+
+  // Aplicar tema guardado en la carga de página
+  document.documentElement.setAttribute('data-bs-theme', currentTheme);
+  updateButtonText(currentTheme);
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      // Cambiar tema según el actual
+      currentTheme = (currentTheme === 'light') ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-bs-theme', currentTheme);
+      localStorage.setItem('theme', currentTheme);
+      updateButtonText(currentTheme);
+    });
+  }
+
+  function updateButtonText(theme) {
+    if (!toggleBtn) return;
+    toggleBtn.textContent = theme === 'light' ? 'Modo Oscuro' : 'Modo Claro';
+  }
+});
+
+
+
+    </script>
+    </body>
+</html>
